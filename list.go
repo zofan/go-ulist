@@ -4,6 +4,7 @@ import "sync"
 
 type Item interface {
 	Equal(Item) bool
+	Merge(Item)
 }
 
 type List struct {
@@ -18,26 +19,19 @@ func New(list []Item) *List {
 }
 
 func (l *List) Add(v Item) {
-	if l.Has(v) {
-		return
-	}
+	x := l.Get(v)
 
-	l.mu.Lock()
-	l.Entities = append(l.Entities, v)
-	l.mu.Unlock()
+	if x != nil {
+		x.Merge(v)
+	} else {
+		l.mu.Lock()
+		l.Entities = append(l.Entities, v)
+		l.mu.Unlock()
+	}
 }
 
 func (l *List) Has(v Item) bool {
-	l.mu.RLock()
-	defer l.mu.RUnlock()
-
-	for _, e := range l.Entities {
-		if e.Equal(v) {
-			return true
-		}
-	}
-
-	return false
+	return l.Index(v) >= 0
 }
 
 func (l *List) Index(v Item) int {
@@ -77,12 +71,12 @@ func (l *List) Del(v Item) {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
 
-	for i, e := range l.Entities {
-		if e.Equal(v) {
+	for i := 0; i < len(l.Entities); i++ {
+		if l.Entities[i].Equal(v) {
 			l.mu.Lock()
 			l.Entities = append(l.Entities[:i], l.Entities[i+1:]...)
 			l.mu.Unlock()
-			break
+			i--
 		}
 	}
 }
