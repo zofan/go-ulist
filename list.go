@@ -74,9 +74,29 @@ func (l *List) Del(v Item) {
 	for i := 0; i < len(l.Entities); i++ {
 		if l.Entities[i].Equal(v) {
 			l.mu.Lock()
-			l.Entities = append(l.Entities[:i], l.Entities[i+1:]...)
+			l.Entities[i] = l.Entities[0]
+			l.Entities = l.Entities[1:]
 			l.mu.Unlock()
 			i--
+		}
+	}
+}
+
+func (l *List) Merge() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	for ai := 0; ai < len(l.Entities); ai++ {
+		a := l.Entities[ai]
+		for bi := 0; bi < len(l.Entities); bi++ {
+			b := l.Entities[bi]
+			if a.Equal(b) {
+				a.Merge(b)
+
+				l.Entities[bi] = l.Entities[0]
+				l.Entities = l.Entities[1:]
+				i--
+			}
 		}
 	}
 }
