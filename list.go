@@ -88,6 +88,7 @@ func (l *List) Merge() {
 
 	for ai := 0; ai < len(l.Entities); ai++ {
 		a := l.Entities[ai]
+		var del bool
 		for bi := 0; bi < len(l.Entities); bi++ {
 			b := l.Entities[bi]
 			if a.Equal(b) {
@@ -95,8 +96,12 @@ func (l *List) Merge() {
 
 				l.Entities[bi] = l.Entities[0]
 				l.Entities = l.Entities[1:]
-				i--
+				bi--
+				del = true
 			}
+		}
+		if del {
+			ai--
 		}
 	}
 }
